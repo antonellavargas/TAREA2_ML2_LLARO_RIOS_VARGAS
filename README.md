@@ -1,4 +1,13 @@
-# Assignment 2: Principal Component Analysis, Neural Networks
+# **TAREA 2 - MACHINE LEARNING 2**
+### **Assignment 2: Principal Component Analysis, Neural Networks**
+
+**Integrantes:**
+
+* Llaro Castro, Diego Renato
+* Rios Meza, Jennifer Saskia
+* Vargas Flores, Johanna Antonella
+
+---
 
 Deadline: Tuesday, November 4th, 2025, 23:59
 
