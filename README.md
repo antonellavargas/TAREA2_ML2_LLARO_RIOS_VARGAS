@@ -21,114 +21,54 @@ Environment: Python, numpy, pandas, matplotlib, scikit-learn, pytorch.
 
 1. **Load the Training and Test Sets**
 
-   Load the training images contained in `data` into a matrix **X**.
-   There are 540 training images, each with resolution $50 \times 50$. Flatten each image into a 2500-dimensional vector. Thus, **X** should have shape **$540 \times 2500$**, where each row is a flattened face image.
-
-   Similarly, build the test matrix **$X_{test}$**, which should have shape **$100 \times 2500$**.
-
-   Display an example training and test image in grayscale.
-
-   Example code snippet for loading the training data:
-
-   ```python
-   import numpy as np
-   from matplotlib import pylab as plt
-   import matplotlib.cm as cm
-   import imageio
-
-   train_labels, train_data = [], []
-   for line in open('./data/train.txt'):
-       im = imageio.v2.imread("" + line.strip().split()[0])
-       train_data.append(im.reshape(2500,))
-       train_labels.append(line.strip().split()[1])
-   train_data, train_labels = np.array(train_data, dtype=float), np.array(train_labels, dtype=int)
-
-   print(train_data.shape, train_labels.shape)
-   plt.imshow(train_data[10, :].reshape(50,50), cmap = cm.Greys_r)
-   plt.show()
-   ```
+   Se cargo los datos de training y test set respectivamente, al ser las imagenes de 50x50 y aplanar a un vector se contará con 2500 pixeles o atributos en este contexto.
+   Se cargaron 540 imagenes para train y 100 para test
 
 2. **Average Face**
 
-   Compute the *average face* vector $ \mu $ by averaging all rows of **$X$**.
-   Display this average face as a grayscale image.
+   Se calculó el average por columna (feature) de la matriz de train, la cual produce una cara promedio >< del train set.
 
 3. **Mean Subtraction**
 
-   Subtract the average face $\mu$ from each row of **$X$**, i.e., replace each image vector $x_i$ with $x_i - \mu$.
-   Display an example mean-subtracted image.
-   Apply the same mean subtraction to **$X_{test}$**, using the same $\mu$.
-   From now on, for training and testing, you should use the demeaned matrix.
+   Se resto esa cara promedio de todas las imagenes o filas, esto con la finalidad de centrar los datos, esto fue realizado tanto para train como para test.
 
 4. **Eigenfaces**
 
-   Compute the eigendecomposition of $X^T X = V \Lambda V^T$ to obtain eigenvectors.
-   The rows of $V^T$ correspond to eigenfaces.
-
-   Display 10 eigenfaces as grayscale images.
-
-   Note: Eigenvectors may be complex-valued. You will need to convert them to real values before displaying (e.g., using `np.real`).
+   Se realizó la descomposición para obtener los eigenfaces o rosotros básicos, estos rostros capturan los patrones más comunes en el set de datos, donde cada rostro del train puede ser expresado por estos eigenfaces.
 
 5. **Eigenface Features**
 
-   The top $r$ eigenfaces span an $r$-dimensional **face space**.
-   Represent an image vector $z$ in this space as:
-   
-$$
-   f = [v_1, v_2, \ldots, v_r]^T z
-$$
-
-   Write a function to compute:
-
-   * **$F$**: feature matrix for training data (shape: $540 \times r$)
-   * **$F_{test}$**: feature matrix for test data (shape: $100 \times r$)
-
-   by multiplying **$X$** and **$X_{test}$** with the top $ r$ eigenfaces.
+   Se construyó una función donde cada imagen se representara por los r iegenfaces que se escogia, de esta manera se reduce drasticamente el tamaño que pueden ocupar, saber que características tiene cada rostro, comparar rostros de manera mas simple.
 
 6. **Face Recognition**
 
-   Use **logistic regression** (e.g., from `scikit-learn`) for classification.
+   Se realizó una regresión logistica para `r = 10`, se mapeo los datos de train y test a este `r` se entrenó el modelo y para la predicción se obtuvo un `accuracy de 76% para r = 10`
+   Se realizó el mismo procedimiento para `r = 1, 2, ..., 200` y se procedió a plotear la precision respecto al número de iegenfaces tomadas, donde se observa que `apartir de r = 50, se tiene una precisión de mas de 90% la cual tiende a disminuir un poco por alrededor de r = 110`.
+   **La mejor precisión fue de 93% en el r = 47**
 
-   * Extract features using $ r = 10 $ (supress the intercept, as it is not necessary because the matrix is demeaned)
-   * Train logistic regression on **$F$** and evaluate on **$F_{test}$**
-   * Report classification accuracy on the test set
-   * Then repeat for $ r = 1, 2, \ldots, 200 $ and plot accuracy as a function of $ r $
+
 
 7. **Low-Rank Reconstruction Loss**
 
-   Reconstruct approximations $ X' $ from the features by multiplying:
-
-$$
-X' = F \cdot \text{(top } r \text{ eigenfaces)}
-$$
-
-   Compute and plot the average Frobenius distance:
-
-$$
-   d(X, X') = \sqrt{\text{tr}((X - X')^T (X - X'))}
-$$
-
-   for $ r = 1, 2, \ldots, 200 $.
+   A partir de los eigenfeatures se pueden reconstruir las imagenes (aprox), demostrando que se preserva la información más importante. Además, se ploteo el error de reconstrucción respecto al número de eigenfaces para saber con cuantos eigenfaces son necesarios para reconstruir bien las imágenes, aunque no existe un número exacto ya que es un tradeoff de calidad vs tamaño
 
 ### Part II: Neural Networks
 
-Modify the example on Convolutional Neural Networks shown in the practical sessions, to use the original MNIST dataset. Create and train all models shown, and plot their convergence curves. To download the MNIST data, use:
+   Se entrenó una Red Neuronal Convolucional (CNN) para clasificar dígitos escritos a mano (0-9).
+   Se usó:
+    - dos capas convolucionales (kernel de 3x3)
+    - una de pooling (2x2) -> reduce dimensiones a la mitad
+    - dos capas fully connected (128 y 10 neuronas respectivamente)
+    - la función de activación ReLU
 
-```python
-mnist_train = datasets.MNIST(
-    "/content/sample_data", download = True, train = True,
-    transform = transforms.ToTensor()
-)
-mnist_test = datasets.MNIST(
-    "/content/sample_data", train = False, transform = transforms.ToTensor()
-)
-```
+   Se obtuvieron los siguientes resultados con 5 epochs:
 
----
+   | Época | Train Loss | Train Accuracy | Test Loss | Test Accuracy |
+|:-----:|:----------:|:--------------:|:---------:|:-------------:|
+| 1/5   | 0.1565     | 95.26%         | 0.0486    | 98.36%    |
+| 2/5   | 0.0431     | 98.67%         | 0.0415    | 98.67%    |
+| 3/5   | 0.0264     | 99.14%         | 0.0355    | 98.88%    |
+| 4/5   | 0.0181     | 99.39%         | 0.0353    | 98.86%    |
+| 5/5   | 0.0137     | 99.56%         | 0.0390    | 98.81%    |
 
-### Deliverables
-
-  * You must fork the original repository, and turn in a link to your group's repository.
-  * This fork must have a Jupyter notebook in the src folder, which contains all the code to solve each of the problems.
-  * For the written commentary, you may choose between presenting it in Markdown cells within the Jupyter notebook or creating a separate README.md inside the src folder.
-
+   como se observa el modelo aprende correctamente y tiene un rendimiento excelente en el test -> **98.81%**. En los plots se observa que para el error de train y test se desciende rápidamente a valores muy pequeños `<0.04`, y para el `accuracy` se llega por encima de 98% para ambos sets con un ligero `overfitting`.
